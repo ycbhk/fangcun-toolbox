@@ -1,19 +1,26 @@
 {
   "name": "fangcun-toolbox",
-  "version": "1.0.0",
-  "title": "方寸工具箱",
-  "description": "思源笔记多行选择工具，桌面端/移动端均支持多行选择功能",
   "author": "逆念",
-  "homepage": "https://ycb.cc",
-  "repository": "",
-  "license": "MIT",
-  "main": "dist/main.js",
-  "keywords": ["思源笔记", "多行选择", "工具箱", "移动端适配"],
-  "engines": {
-    "siyuan": ">=2.10.0"
-  },
+  "version": "1.0.0",
+  "minAppVersion": "3.3.0",
+  "backends": ["all"],
+  "frontends": ["all"],
   "displayName": {
-    "zh-CN": "方寸工具箱",
-    "en-US": "Fangcun Toolbox"
+    "zh_CN": "方寸工具箱"
+  },
+  "description": {
+    "zh_CN": "极简悬浮快捷面板（兼容手机端）"
+  },
+  "main": "index.js",
+  "hasWidget": true,
+  "widget": {
+    "url": "index.html",
+    "width": 300,
+    "height": 400
+  },
+  "setting": {
+    "url": "settings.html",
+    "width": 1000,
+    "height": 600
   }
 }

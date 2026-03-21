@@ -1,0 +1,109 @@
+{
+  "buttons": [
+    {
+      "name": "命令面板",
+      "emoji": "⚡",
+      "type": "selector",
+      "value": "#barCommand",
+      "bgColor": "#e8f4ff",
+      "color": "#1377EB",
+      "sort": 0,
+      "targetTab": "pc",
+      "displayMode": "both",
+      "isCustomIcon": false,
+      "customIconPath": ""
+    },
+    {
+      "name": "立即同步",
+      "emoji": "⚡",
+      "type": "selector",
+      "value": "#barCommand|#commands > li:nth-child(52)",
+      "bgColor": "#e8f4ff",
+      "color": "#1377EB",
+      "sort": 0,
+      "targetTab": "pc",
+      "displayMode": "both",
+      "isCustomIcon": false,
+      "customIconPath": ""
+    },
+    {
+      "name": "新建日记",
+      "emoji": "⚡",
+      "type": "selector",
+      "value": "#barCommand|#commands > li:nth-child(11)",
+      "bgColor": "#e8f4ff",
+      "color": "#1377EB",
+      "sort": 0,
+      "targetTab": "pc",
+      "displayMode": "both",
+      "isCustomIcon": false,
+      "customIconPath": ""
+    },
+    {
+      "name": "命令面板",
+      "emoji": "⚡",
+      "type": "selector",
+      "value": "#toolbarMore > use|#menuCommand",
+      "bgColor": "#e8f4ff",
+      "color": "#1377EB",
+      "sort": 0,
+      "targetTab": "mobile",
+      "displayMode": "both",
+      "isCustomIcon": false,
+      "customIconPath": ""
+    },
+    {
+      "name": "新建日记",
+      "emoji": "⚡",
+      "type": "selector",
+      "value": "#toolbarMore > use|#menuNewDaily",
+      "bgColor": "#e8f4ff",
+      "color": "#1377EB",
+      "sort": 0,
+      "targetTab": "mobile",
+      "displayMode": "both",
+      "isCustomIcon": false,
+      "customIconPath": ""
+    },
+    {
+      "name": "立即同步",
+      "emoji": "⚡",
+      "type": "selector",
+      "value": "#toolbarMore > use|#menuSyncNow",
+      "bgColor": "#e8f4ff",
+      "color": "#1377EB",
+      "sort": 0,
+      "targetTab": "mobile",
+      "displayMode": "both",
+      "isCustomIcon": false,
+      "customIconPath": ""
+    },
+    {
+      "name": "锁屏",
+      "emoji": "⚡",
+      "type": "selector",
+      "value": "#toolbarMore > use|#menuLock",
+      "bgColor": "#e8f4ff",
+      "color": "#1377EB",
+      "sort": 0,
+      "targetTab": "mobile",
+      "displayMode": "both",
+      "isCustomIcon": false,
+      "customIconPath": ""
+    }
+
+
+  ],
+  "panelConfig": {
+    "pc": {
+      "width": 100,
+      "height": "auto",
+      "fontSize": 14
+    },
+    "mobile": {
+      "width": 100,
+      "height": "auto",
+      "fontSize": 14
+    }
+  }
+}
