@@ -102,7 +102,7 @@ MIT License
 ## 👨‍💻 作者
 
 逆念
-QQ：508044570
+QQ：499778277
 主页：HTTPS://YCB.CC
 
 
