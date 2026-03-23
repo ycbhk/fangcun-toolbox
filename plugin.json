@@ -6,6 +6,7 @@
   "minAppVersion": "3.3.0",
   "backends": ["all"],
   "frontends": ["all"],
+  "disabledInPublish": true,
   "displayName": {
     "default": "方寸工具箱",
     "zh_CN": "方寸工具箱"
