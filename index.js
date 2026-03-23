@@ -4,7 +4,7 @@ try {
   fs = require("fs");
   path = require("path");
 } catch (e) {
-  console.warn("Node.js 模块加载失败，将使用浏览器兼容模式", e);
+  // Node.js 模块加载失败，将使用浏览器兼容模式
   fs = null;
   path = null;
 }
@@ -36,7 +36,6 @@ const siyuanFS = {
       
       throw new Error('无法读取文件');
     } catch (e) {
-      console.error('读取文件失败:', e);
       return null;
     }
   },
@@ -85,7 +84,6 @@ const siyuanFS = {
       
       throw new Error('无法写入文件：思源 API 不可用或无权限');
     } catch (e) {
-      console.error('写入文件失败:', e);
       return false;
     }
   },
@@ -137,7 +135,6 @@ const siyuanFS = {
       
       return false;
     } catch (e) {
-      console.error('创建目录失败:', e);
       return false;
     }
   }
@@ -283,18 +280,13 @@ class FangcunToolbox extends Plugin {
     try {
       // 新增：提前检查 app 是否初始化
       if (!this.app) {
-        console.warn("app 实例未初始化，延迟 1 秒重试");
         setTimeout(() => this.onload(), 1000);
         return;
       }
           
       // 输出调试信息
-      console.log("🔧 方寸工具箱插件启动");
-      console.log("📂 数据目录:", this.app?.config?.dataDir || window.siyuan?.config?.dataDir);
-      console.log("📁 插件目录:", this.pluginDir);
-      console.log("📄 配置文件路径:", this.configFilePath);
-      console.log("🔍 fs 模块:", fs ? "可用" : "不可用");
-      console.log("🌐 window.siyuan.api:", (window.siyuan && window.siyuan.api) ? "可用" : "不可用");
+      // 插件启动信息
+      const dataDir = this.app?.config?.dataDir || window.siyuan?.config?.dataDir;
           
       // 确保插件目录存在（异步调用）
       await this.ensureDirExists(this.pluginDir);
@@ -302,20 +294,17 @@ class FangcunToolbox extends Plugin {
           
       // 核心修复：从插件目录加载配置（异步调用）
       const savedConfig = await this.loadConfigFromFile();
-      console.log("加载到的原始配置:", JSON.stringify(savedConfig, null, 2));
         
       if (savedConfig) {
         // 兼容旧配置格式
         let loadedButtons = savedConfig.buttons || savedConfig.button_config?.buttons || [];
-        console.log(`加载到 ${loadedButtons.length} 个按钮`);
           
         // 如果加载的按钮没有 targetTab 字段，说明是旧配置，需要同时创建 PC 和移动端版本
         const hasTargetTab = loadedButtons.some(btn => btn.targetTab);
-        console.log(`是否有 targetTab 字段：${hasTargetTab}`);
           
         if (!hasTargetTab && loadedButtons.length > 0) {
           // 旧配置：为每个按钮创建 PC 和移动端两个版本
-          console.log("检测到旧配置，为每个按钮创建双端版本");
+          // 为每个按钮创建双端版本（PC 端和移动端）
           const pcButtons = loadedButtons.map(btn => ({ ...btn, targetTab: "pc" }));
           const mobileButtons = loadedButtons.map(btn => ({ ...btn, targetTab: "mobile" }));
           buttonConfig = [...pcButtons, ...mobileButtons];
@@ -323,27 +312,21 @@ class FangcunToolbox extends Plugin {
           // 新配置：检查是否同时有 PC 和移动端按钮
           const hasPcButtons = loadedButtons.some(btn => btn.targetTab === "pc");
           const hasMobileButtons = loadedButtons.some(btn => btn.targetTab === "mobile");
-          console.log(`PC 端按钮：${hasPcButtons ? loadedButtons.filter(b => b.targetTab === 'pc').length : 0} 个`);
-          console.log(`移动端按钮：${hasMobileButtons ? loadedButtons.filter(b => b.targetTab === 'mobile').length : 0} 个`);
             
           // 如果只有一边有按钮，复制另一边
           if (hasPcButtons && !hasMobileButtons) {
-            console.log("只有 PC 端按钮，自动复制到移动端");
             const pcBtns = loadedButtons.filter(btn => btn.targetTab === "pc");
             const mobileBtns = pcBtns.map(btn => ({ ...btn, targetTab: "mobile" }));
             buttonConfig = [...loadedButtons, ...mobileBtns];
           } else if (!hasPcButtons && hasMobileButtons) {
-            console.log("只有移动端按钮，自动复制到 PC 端");
             const mobileBtns = loadedButtons.filter(btn => btn.targetTab === "mobile");
             const pcBtns = mobileBtns.map(btn => ({ ...btn, targetTab: "pc" }));
             buttonConfig = [...loadedButtons, ...pcBtns];
           } else {
-            console.log("PC 端和移动端按钮都已存在");
             buttonConfig = loadedButtons;
           }
         } else {
           // 空配置，使用默认值
-          console.log("配置为空，使用默认配置");
           buttonConfig = [];
         }
           
@@ -352,7 +335,6 @@ class FangcunToolbox extends Plugin {
           mobile: { width: 300, height: "auto", fontSize: 14 }
         };
       } else {
-        console.log("配置加载失败，使用默认配置");
         // 默认配置（同时创建 PC 和移动端按钮）
         buttonConfig = [
           // PC 端默认按钮
@@ -411,7 +393,6 @@ class FangcunToolbox extends Plugin {
               
       // 根据配置决定是否启用悬浮按钮
       const enabled = savedConfig?.enabled ?? true; // 如果没有 enabled 字段，默认为 true
-      console.log(`插件启用状态：${enabled}`);
             
       // 重要：将 loaded config 保存到 this.config，确保后续保存时包含所有字段
       this.config = {
@@ -428,11 +409,8 @@ class FangcunToolbox extends Plugin {
         setTimeout(() => {
           this.rebuildFloatButton(true);
         }, 100);
-      } else {
-        console.log("插件已禁用，不创建悬浮按钮");
       }
     } catch (e) {
-      console.error("初始化配置失败：", e);
       // 强制创建移动端按钮
       buttonConfig = [
         {
@@ -476,49 +454,30 @@ class FangcunToolbox extends Plugin {
       const exists = await siyuanFS.exists(dirPath);
       if (!exists) {
         await siyuanFS.mkdir(dirPath);
-        console.log(`创建目录成功：${dirPath}`);
       }
     } catch (e) {
-      console.warn(`创建目录失败：${dirPath}`, e);
+      // 静默失败
     }
   }
 
   // 从插件目录加载配置文件 - 核心修复：使用思源自带的持久化 API
   async loadConfigFromFile() {
     try {
-      console.log(`📂 尝试从思源数据目录加载配置`);
-      
       // 方案 1: 使用思源插件的 loadData 方法（自动处理跨平台存储）
       const savedConfig = await this.loadData("config");
       if (savedConfig) {
-        console.log(`✓ 从思源数据目录加载配置成功`);
-        console.log(`配置内容:`, JSON.stringify(savedConfig, null, 2));
         return savedConfig;
       }
       
-      // 方案 2: 直接从 config.json 文件读取
-      console.log(`📄 尝试从 config.json 文件读取`);
-      const configPath = `${this.pluginDir}/config.json`;
-      const configStr = await siyuanFS.readFile(configPath);
-      if (configStr) {
-        const config = JSON.parse(configStr);
-        console.log(`✓ 从 config.json 读取成功`);
-        console.log(`配置内容:`, JSON.stringify(config, null, 2));
-        return config;
-      }
-      
-      // 方案 3: 降级方案：从 localStorage 加载
+      // 方案 2: 降级方案：从 localStorage 加载
       const backup = localStorage.getItem("fc_config_backup");
       if (backup) {
-        console.log(`⚠️ 从 localStorage 加载配置`);
         return JSON.parse(backup);
       }
       
-      console.log(`⚠️ 配置不存在，将使用默认配置`);
       return null;
       
     } catch (e) {
-      console.error("❌ 加载配置失败：", e);
       return null;
     }
   }
@@ -528,10 +487,8 @@ class FangcunToolbox extends Plugin {
     try {
       // 使用思源插件的 saveData 方法（自动处理跨平台存储）
       await this.saveData("config", data);
-      console.log(`✓ 配置已保存（通过思源 API）`);
       return true;
     } catch (e) {
-      console.error("❌ 保存配置失败：", e);
       // 降级方案：保存到 localStorage
       localStorage.setItem("fc_config_backup", JSON.stringify(data));
       return false;
@@ -543,7 +500,6 @@ class FangcunToolbox extends Plugin {
     try {
       customIcons = [];
       if (!await siyuanFS.exists(this.customIconPath)) {
-        console.log("自定义图标目录不存在");
         return;
       }
       
@@ -562,11 +518,9 @@ class FangcunToolbox extends Plugin {
             });
           }
         });
-      } else {
-        console.log("fs 或 path 模块不可用，跳过自定义图标加载");
       }
     } catch (e) {
-      console.error("加载自定义图标失败：", e);
+      // 静默失败
     }
   }
 
@@ -980,7 +934,6 @@ class FangcunToolbox extends Plugin {
           break;
       }
     } catch (e) {
-      console.error("触发失败：", e);
       this.showToast(`触发失败：${e.message}`, "error");
     }
   }
@@ -1109,7 +1062,6 @@ class FangcunToolbox extends Plugin {
       this.showToast(`执行成功：${btnName}`, "success");
     } catch (e) {
       this.showToast(`执行失败：${e.message}`, "error");
-      console.error("多级选择器错误：", e);
     }
   }
 
@@ -1152,9 +1104,8 @@ class FangcunToolbox extends Plugin {
         return;
       }
       window.location.hash = `#/d/${docId}`;
-      this.showToast(`执行成功: ${btnName}`, "success");
+      this.showToast(`执行成功：${btnName}`, "success");
     } catch (e) {
-      console.error("打开文档失败：", e);
       this.showToast(`打开失败`, "error");
     }
   }
@@ -1176,9 +1127,8 @@ class FangcunToolbox extends Plugin {
         return;
       }
       window.location.hash = `#/b/${blockId}`;
-      this.showToast(`执行成功: ${btnName}`, "success");
+      this.showToast(`执行成功：${btnName}`, "success");
     } catch (e) {
-      console.error("打开块失败：", e);
       this.showToast(`打开失败`, "error");
     }
   }
@@ -2450,7 +2400,6 @@ class FangcunToolbox extends Plugin {
       const settingsIcon = modal.querySelector('#floating-settings-btn');
       if (settingsIcon && enabled) {
         settingsIcon.addEventListener('click', () => {
-          console.log('打开悬浮按钮设置界面');
           // 关闭当前设置对话框
           document.body.removeChild(modal);
           // 打开悬浮按钮的设置（通过点击悬浮按钮来触发）
@@ -2478,7 +2427,6 @@ class FangcunToolbox extends Plugin {
     try {
       // 使用思源 API 保存配置（确保跨平台同步）
       await this.saveData("config", this.config);
-      console.log(`配置已更新：${key} = ${value}`);
       
       // 根据配置更新 UI
       if (key === 'enabled') {
@@ -2491,7 +2439,6 @@ class FangcunToolbox extends Plugin {
       
       this.showToast('设置已保存', 'success');
     } catch (e) {
-      console.error('保存配置失败:', e);
       // 降级保存到 localStorage
       localStorage.setItem('fc_config_backup', JSON.stringify(this.config));
       this.showToast('保存失败，已保存到本地缓存', 'error');
@@ -2537,14 +2484,12 @@ class FangcunToolbox extends Plugin {
     const btn = document.getElementById('fc-btn');
     if (btn) {
       btn.remove();
-      console.log('悬浮按钮已移除');
     }
     
     // 移除面板
     const panel = document.getElementById('fc-panel');
     if (panel) {
       panel.remove();
-      console.log('面板已移除');
     }
     
     // 清空引用
