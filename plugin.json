@@ -1,6 +1,7 @@
 {
   "name": "fangcun-toolbox",
   "author": "逆念",
+  "url": "https://github.com/ycbhk/fangcun-toolbox",
   "version": "1.0.0",
   "minAppVersion": "3.3.0",
   "backends": ["all"],
@@ -13,7 +14,6 @@
     "default": "极简悬浮快捷面板（兼容手机端），后续扩展更多功能",
     "zh_CN": "极简悬浮快捷面板（兼容手机端），后续扩展更多功能"
   },
-  "icon": "./icon.png",
   "readme": {
     "default": "README.md"
   },
@@ -21,8 +21,6 @@
     "方寸工具箱",
     "悬浮按钮",
     "快捷按钮"
-  ],
-  "main": "index.js"
-
+  ]
 
 }
