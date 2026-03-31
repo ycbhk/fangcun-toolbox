@@ -1,110 +1,4 @@
-const { Plugin } = require("siyuan");
-
-// 思源笔记文件操作 API（完全使用思源 API，不依赖 Node.js 模块）
-const siyuanFS = {
-  // 读取文件
-  async readFile(filePath) {
-    try {
-      // 使用思源 API
-      if (window.siyuan && window.siyuan.api) {
-        const response = await fetch('/api/file/get', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path: filePath })
-        });
-        const result = await response.json();
-        if (result.code === 0) {
-          return result.data.content;
-        }
-      }
-      
-      throw new Error('无法读取文件');
-    } catch (e) {
-      return null;
-    }
-  },
-  
-  // 写入文件
-  async writeFile(filePath, content) {
-    try {
-      // 使用思源 API
-      if (window.siyuan && window.siyuan.api) {
-        // 尝试 1: putFile API
-        let response = await fetch('/api/file/put', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            path: filePath,
-            data: content
-          })
-        });
-        let result = await response.json();
-        if (result.code === 0) {
-          return true;
-        }
-        
-        // 尝试 2: writeFile API
-        response = await fetch('/api/file/write', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            path: filePath,
-            data: content,
-            mode: 'w'
-          })
-        });
-        result = await response.json();
-        if (result.code === 0) {
-          return true;
-        }
-      }
-      
-      throw new Error('无法写入文件：思源 API 不可用或无权限');
-    } catch (e) {
-      return false;
-    }
-  },
-  
-  // 检查文件是否存在
-  async exists(filePath) {
-    try {
-      // 尝试通过思源 API 读取
-      if (window.siyuan && window.siyuan.api) {
-        const response = await fetch('/api/file/get', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path: filePath })
-        });
-        const result = await response.json();
-        return result.code === 0;
-      }
-      
-      return false;
-    } catch (e) {
-      return false;
-    }
-  },
-  
-  // 创建目录
-  async mkdir(dirPath) {
-    try {
-      // 使用思源 API
-      if (window.siyuan && window.siyuan.api) {
-        const response = await fetch('/api/file/mkdir', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ path: dirPath })
-        });
-        const result = await response.json();
-        return result.code === 0;
-      }
-      
-      return false;
-    } catch (e) {
-      return false;
-    }
-  }
-};
+﻿const { Plugin } = require("siyuan");
 
 let pluginInstance = null;
 let buttonConfig = [];
@@ -118,17 +12,11 @@ let editBtnIndex = -1; // 当前编辑的按钮索引（-1 表示新增）
 // ===================== 核心修复1：增强移动端检测 =====================
 // 更精准的移动端检测（支持思源内置移动端判断）
 const isMobile = () => {
-  // 优先使用思源内置的移动端判断
-  if (window?.siyuan?.config?.system?.isMobile) {
-    return true;
+  if (window?.siyuan?.config?.system?.isMobile !== undefined) {
+    return window.siyuan.config.system.isMobile;
   }
-  // 备用检测方案
-  if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
-  const userAgent = navigator.userAgent.toLowerCase();
-  const isMobileUA = /mobile|android|iphone|ipad|ipod|ios|windows phone|blackberry|webos|opera mini|iemobile|mobile safari|huawei|xiaomi|oppo|vivo|meizu/i.test(userAgent);
-  const isSmallScreen = window.innerWidth < 768 || window.innerHeight < 768;
-  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-  return isMobileUA || (isSmallScreen && isTouchDevice);
+  const frontEnd = window.siyuan?.api?.getFrontend?.();
+  return frontEnd === "mobile" || frontEnd === "browser-mobile";
 };
 
 // 思源完整分类Emoji库
@@ -200,9 +88,6 @@ class FangcunToolbox extends Plugin {
     pluginInstance = this;
     this.app = app;
     this.initTimer = null;
-    // 插件目录配置（核心：将数据保存在插件目录下）
-    this.pluginDir = this.getPluginDir(manifest);
-    this.configFilePath = `${this.pluginDir}/config.json`; // 配置文件路径
   }
 
   // 获取插件目录（兼容移动端）
@@ -237,48 +122,13 @@ class FangcunToolbox extends Plugin {
       // 插件启动信息
       const dataDir = this.app?.config?.dataDir || window.siyuan?.config?.dataDir;
           
-      // 确保插件目录存在（异步调用）
-      await this.ensureDirExists(this.pluginDir);
-          
       // 核心修复：从插件目录加载配置（异步调用）
       const savedConfig = await this.loadConfigFromFile();
         
       if (savedConfig) {
-        // 兼容旧配置格式
-        let loadedButtons = savedConfig.buttons || savedConfig.button_config?.buttons || [];
-          
-        // 如果加载的按钮没有 targetTab 字段，说明是旧配置，需要同时创建 PC 和移动端版本
-        const hasTargetTab = loadedButtons.some(btn => btn.targetTab);
-          
-        if (!hasTargetTab && loadedButtons.length > 0) {
-          // 旧配置：为每个按钮创建 PC 和移动端两个版本
-          // 为每个按钮创建双端版本（PC 端和移动端）
-          const pcButtons = loadedButtons.map(btn => ({ ...btn, targetTab: "pc" }));
-          const mobileButtons = loadedButtons.map(btn => ({ ...btn, targetTab: "mobile" }));
-          buttonConfig = [...pcButtons, ...mobileButtons];
-        } else if (loadedButtons.length > 0) {
-          // 新配置：检查是否同时有 PC 和移动端按钮
-          const hasPcButtons = loadedButtons.some(btn => btn.targetTab === "pc");
-          const hasMobileButtons = loadedButtons.some(btn => btn.targetTab === "mobile");
-            
-          // 如果只有一边有按钮，复制另一边
-          if (hasPcButtons && !hasMobileButtons) {
-            const pcBtns = loadedButtons.filter(btn => btn.targetTab === "pc");
-            const mobileBtns = pcBtns.map(btn => ({ ...btn, targetTab: "mobile" }));
-            buttonConfig = [...loadedButtons, ...mobileBtns];
-          } else if (!hasPcButtons && hasMobileButtons) {
-            const mobileBtns = loadedButtons.filter(btn => btn.targetTab === "mobile");
-            const pcBtns = mobileBtns.map(btn => ({ ...btn, targetTab: "pc" }));
-            buttonConfig = [...loadedButtons, ...pcBtns];
-          } else {
-            buttonConfig = loadedButtons;
-          }
-        } else {
-          // 空配置，使用默认值
-          buttonConfig = [];
-        }
-          
-        panelConfig = savedConfig.panel_config || savedConfig.panelConfig || {
+        buttonConfig = savedConfig.buttons || [];
+        
+        panelConfig = savedConfig.panelConfig || {
           pc: { width: 120, height: "auto", fontSize: 14 },
           mobile: { width: 100, height: "auto", fontSize: 14 }
         };
@@ -393,20 +243,7 @@ class FangcunToolbox extends Plugin {
           panelConfig: panelConfig
         });
       }
-        
-      // 兼容旧配置，补全缺失字段（但不修改 targetTab）
-      buttonConfig = buttonConfig.map(btn => ({
-        name: btn.name || "未命名按钮",
-        emoji: btn.emoji || "⚡",
-        type: btn.type || "selector",
-        value: btn.value || "",
-        bgColor: this.formatColor(btn.bgColor || "#f8f9fa"),
-        color: this.formatColor(btn.color || "#333333"),
-        sort: typeof btn.sort === "number" ? btn.sort : 0,
-        targetTab: btn.targetTab, // 保持原有的 targetTab，不覆盖
-        displayMode: btn.displayMode || "both"
-      }));
-        
+  
 
               
       // 根据配置决定是否启用悬浮按钮
@@ -462,17 +299,7 @@ class FangcunToolbox extends Plugin {
     }
   }
 
-  // 确保目录存在（递归创建）
-  async ensureDirExists(dirPath) {
-    try {
-      const exists = await siyuanFS.exists(dirPath);
-      if (!exists) {
-        await siyuanFS.mkdir(dirPath);
-      }
-    } catch (e) {
-      // 静默失败
-    }
-  }
+
 
   // 从插件目录加载配置文件 - 核心修复：使用思源自带的持久化 API
   async loadConfigFromFile() {
@@ -522,7 +349,9 @@ class FangcunToolbox extends Plugin {
     document.getElementById("fc-btn")?.remove();
     document.getElementById("fc-panel")?.remove();
     document.getElementById("fc-settings-mask")?.remove();
-    
+  }
+
+  async uninstall() {
     // 卸载插件时删除插件数据
     await this.removeData("config").catch(e => {
       this.showToast(`卸载时删除数据失败：${e.message}`, "error");
@@ -1149,7 +978,7 @@ class FangcunToolbox extends Plugin {
     return true;
   }
 
-  // ===================== 核心修复2&3：重写设置界面 =====================
+  // ===================== 核心修复 2&3：重写设置界面 =====================
   openSettings() {
     activeConfigTab = "pc";
     editBtnIndex = -1;
